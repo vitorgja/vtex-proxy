@@ -74,11 +74,11 @@ gulp.task('images', () => {
 
 gulp.task('browserSync', () => {
     browserSync.init({
-        open: false,
-        https: config.https || true,
+        open: config.open ? true : false,
+        https: config.https ? true : false,
         host: config.accountName + '.vtexlocal.com.br',
         startPath: '/admin/login/',
-        proxy: 'https://' + config.accountName + '.vtexcommercestable.com.br',
+        proxy: (config.https ? 'https://' : 'http://') + config.accountName + '.vtexcommercestable.com.br',
         serveStatic: [{
             route: '/arquivos',
             dir: [bases.build]
