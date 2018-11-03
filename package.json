@@ -20,5 +20,8 @@
     "gulp-copy": "^1.0.1",
     "gulp-rename": "^1.2.2",
     "run-sequence": "^2.2.0"
-  }
+  },
+  "contributors": [
+    "Vitor Pereira <vitor_gja_@hotmail.com>"
+  ]
 }
