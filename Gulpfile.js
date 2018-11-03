@@ -12,11 +12,13 @@ var config      = JSON.parse(fs.readFileSync('configs.json'))
 
 let bases = {
     src: './src',
-    build: './build/arquivos'
+    build: './build/'
 },
 paths = {
     sass: bases.src + '/sass/**/*.scss',
+    sassCheckout: bases.src + '/checkout/sass/**/*.scss',
     scripts: bases.src + '/js/**/*.js',
+    scriptsCheckout: bases.src + '/checkout/js/**/*.js',
     images: [bases.src + '/images/**/*.png', bases.src + '/images/**/*.jpg', bases.src + '/images/**/*.gif'],
     copy: [bases.src + '/**/*.eot', bases.src + '/**/*.svg', bases.src + '/**/*.woff', bases.src + '/**/*.woff2']
 },
@@ -33,13 +35,13 @@ setEnv = (env) => {
 }
 
 gulp.task('clean', () => {
-    return gulp.src(bases.build + '/../')
+    return gulp.src([bases.build + '/files', bases.build + '/arquivos'])
         .pipe(clean())
 })
 
 gulp.task('copy', () => {
     gulp.src(paths.copy)
-        .pipe(gulp.dest(bases.build))
+    .pipe(gulp.dest(bases.build + '/arquivos'))
 })
 
 gulp.task('sass', () => {
@@ -49,7 +51,19 @@ gulp.task('sass', () => {
     if(environment == 'dev')
         scss.pipe(sourcemaps.write())    
 
-        scss.pipe(gulp.dest(bases.build))
+        scss.pipe(gulp.dest(bases.build + '/arqiovos'))
+        scss.pipe(browserSync.stream())
+
+    return scss
+})
+gulp.task('sass:checkout', () => {
+    let scss = gulp.src(paths.sassCheckout)
+        .pipe(sass(sassStyle).on('error', sass.logError))
+    
+    if(environment == 'dev')
+        scss.pipe(sourcemaps.write())    
+
+        scss.pipe(gulp.dest(bases.build + '/files'))
         scss.pipe(browserSync.stream())
 
     return scss
@@ -61,7 +75,18 @@ gulp.task('scripts', ['browserReload'], () => {
     if(environment == 'prod')
         script.pipe(uglify())
 
-    script.pipe(gulp.dest(bases.build))
+    script.pipe(gulp.dest(bases.build + '/arquivos'))
+
+        return script
+})
+
+gulp.task('scripts:checkout', ['browserReload'], () => {
+    let script = gulp.src(paths.scriptsCheckout)
+
+    if(environment == 'prod')
+        script.pipe(uglify())
+
+    script.pipe(gulp.dest(bases.build + '/files'))
 
         return script
 })
@@ -80,15 +105,17 @@ gulp.task('browserSync', () => {
         startPath: '/admin/login/',
         proxy: 'https://' + config.accountName + '.vtexcommercestable.com.br',
         serveStatic: [{
-            route: '/arquivos',
-            dir: [bases.build]
+            route: ['/files', '/arquivos'],
+            dir: [bases.build + '/files', bases.build + '/arquivos']
         }]
     })
 })
 
 gulp.task('watch', () => {
     gulp.watch([paths.sass], ['sass'])
+    gulp.watch([paths.sassCheckout], ['sass:checkout'])
     gulp.watch([paths.scripts], ['scripts'])
+    gulp.watch([paths.scriptsCheckout], ['scripts:checkout'])
     gulp.watch(paths.images, ['images'])
     gulp.watch(paths.fonts, ['copy'])
 })
@@ -100,12 +127,12 @@ gulp.task('browserReload', (cb) => {
 
 gulp.task('dev', () => {
     setEnv('dev')
-    runSequence('clean', 'images', ['copy', 'sass', 'scripts'], 'browserSync', 'watch')
+    runSequence('clean', 'images', ['copy', 'sass', 'sass:checkout', 'scripts', 'scripts:checkout'], 'browserSync', 'watch')
 })
 
 gulp.task('prod', () => {
     setEnv('prod')
-    runSequence('clean', 'images', ['copy', 'sass', 'scripts'])
+    runSequence('clean', 'images', ['copy', 'sass', 'sass:checkout', 'scripts', 'scripts:checkout'])
 })
 
 gulp.task('default', () => {
